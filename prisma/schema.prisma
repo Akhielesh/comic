@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  name      String
+  script    String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Configuration
+  layoutMode String @default("GRID") // GRID, WEBTOON
+  stylePrompt String @default("")
+  stylePreset String @default("DEFAULT")
+
+  // Relations
+  scenes     Scene[]
+  entities   Entity[]
+  panels     Panel[]
+}
+
+model Scene {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  order       Int
+  title       String
+  synopsis    String
+  setting     String
+  characters  String // JSON array of character names present
+
+  panels      Panel[]
+}
+
+model Entity {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  type        String   // CHARACTER, ITEM, LOCATION
+  name        String
+  description String
+  imageUrl    String?  // Reference image
+
+  createdAt   DateTime @default(now())
+}
+
+model Panel {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sceneId     String?
+  scene       Scene?   @relation(fields: [sceneId], references: [id])
+
+  order       Int
+  description String   // Prompt used for generation
+  imageUrl    String?
+  textOverlay String?  // JSON for speech bubbles etc.
+
+  status      String   @default("PENDING") // PENDING, GENERATING, COMPLETED, FAILED
+}
